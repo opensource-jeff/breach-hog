@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
+from pydantic import BaseModel,Field
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 import search_functions
@@ -7,7 +8,22 @@ app = FastAPI()
 templates = Jinja2Templates("templates")
 
 
-        
+# Class definitions for REST-API request and response endpoint
+
+
+class api_search_req(BaseModel):
+    term: str = Field(..., description="Search field i.e. underlying DB column e.g. email")
+    value: str = Field(..., description="Search value e.g. user@example.com")
+
+
+
+class api_search_resp(BaseModel):
+    results: list
+    total_results: int
+
+
+
+
 
 # global search wrapper that is responsible for determining which sub function to call i.e. 
 # User searches for email:mail@example.com the wrapper routes the query to the search_by_email function
@@ -64,3 +80,25 @@ async def search_content(request: Request):
             "error": search_data["error"]
         }
         )
+
+
+
+@app.post("/api/search", response_model=api_search_resp)
+
+async def api_search(request: api_search_req):
+    term = request.term.lower().strip()
+    value = request.value.lower().strip()
+    if term not in settings.VALID_SEARCH_TERMS:
+        raise HTTPException(status_code=400, detail="Invalid search term please reffer to the VALID_SEARCH_TERM list in the settings.py file")
+
+
+    results = await search_functions.search_by_term(term, value)
+    return {
+
+            "results": results,
+            "total_results": len(results)
+            }
+
+
+
+
