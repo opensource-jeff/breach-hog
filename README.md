@@ -137,7 +137,7 @@ After normalizing your datasets:
 
   - `DUCKDB_FILES`
 
-  - `ALLOWED_SEARCH_TERMS`
+  - `VALID_SEARCH_TERMS`
 
 
 ---
